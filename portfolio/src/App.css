@@ -94,7 +94,7 @@ footer
 
 .desktopOnlyMain
 {
-  transition: all 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   top: 30vh;
   left: 0;
   position: absolute;
@@ -104,7 +104,7 @@ footer
 
 .desktopOnlyScroll
 {
-  transition: all 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   top: 0;
   left: 0;
   display: block;
@@ -135,7 +135,7 @@ footer
   position: relative;
   line-height: 1.6;
   width: 25%;
-  transition: all 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: auto;
   font-size: 2.5rem;
   text-align: center;
