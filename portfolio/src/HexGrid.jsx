@@ -1,22 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-
-const Config = {
-  HexRadius: 5,
-  VirtualHeight: 3000,
-  ColorBG: '#000000',
-  ColorStroke: '#0f0f0f',
-  FillSpeed: 0.01,
-  DrainSpeed: 0.01,
-  MaxBranch: 3,
-  DecayRate: 0.5
-};
-
-const State = {
-  Dormant: 0,
-  Filling: 1,
-  Active: 2,
-  Drainign: 3
-};
+import { Config, State } from './data.js';
 
 const axialToPixel = (q, r, radius) => {
   const x = radius * (1.5 * q);
@@ -44,7 +27,7 @@ const neighbouringHexagons = (q,r,HexMap) => {
   return [HexMap.get(`${q+1},${r}`),HexMap.get(`${q-1},${r}`),HexMap.get(`${q},${r+1}`),HexMap.get(`${q},${r-1}`),HexMap.get(`${q+1},${r-1}`),HexMap.get(`${q-1},${r+1}`)]
 };
 
-export default function App()
+export default function HexGrid()
 {
   const canvasRef = useRef(null);
   const scrollRef = useRef(0);
@@ -54,6 +37,8 @@ export default function App()
 	const ctx = canvas.getContext('2d', { alpha: false });
 	let animationFrameId;
 	let HexMap = new Map();
+
+	let currentWidth = window.innerWidth;
 
 	const hexCorners = [];
 	for (let i = 0; i < 6; i++)
@@ -65,10 +50,12 @@ export default function App()
 	  });
 	}
 
-	const resizeAndBuild = () => {
+	const resizeAndBuild = (e) => {
+	  if (e && window.innerWidth === currentWidth) return;
+
 	  canvas.width = window.innerWidth;
 	  canvas.height = window.innerHeight;
-	  
+
 	  HexMap.clear();
 	  const QMax = Math.ceil(canvas.width/(Config.HexRadius*1.5))+1;
 	  for (let q = -1; q <= QMax; q++)
@@ -184,7 +171,6 @@ export default function App()
 		ctx.closePath();
 		ctx.stroke();
 
-		// TODO: If the hex has energy > 0, fill it with your muted turquoise color here
 		if (hex.energy > 0)
 		{
 		  ctx.fillStyle = `rgba(0,123,255,${hex.energy})`;
@@ -219,11 +205,9 @@ export default function App()
   }, []);
 
   return (
-	<div style={{ position: 'relative', minHeight: `${Config.VirtualHeight}px`, color: '#F0F8FF', fontFamily: 'Lato' }}>
-	  <canvas 
+	<canvas 
 		ref={canvasRef} 
-		style={{ position: 'fixed', top: 0, left: 0, zIndex: -1, pointerEvents: 'none' }} 
-	  />
-	</div>
+		style={{ position: 'fixed', top: 0, left: 0, zIndex: -1, pointerEvents: 'none', height: '100%' }} 
+	/>
   );
 }
