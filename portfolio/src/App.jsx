@@ -14,7 +14,7 @@ export default function App() {
 
   useEffect(() => {
     const handleScrollUI = () => {
-      setIsScrolled(window.scrollY > window.innerHeight * 0.10);
+      setIsScrolled(window.scrollY > window.innerHeight * 0.03);
     };
     
     window.addEventListener('scroll', handleScrollUI);
