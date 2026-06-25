@@ -35,9 +35,14 @@ export default function HexGrid()
   useEffect(() => {
 	const canvas = canvasRef.current;
 	const ctx = canvas.getContext('2d', { alpha: false });
+
+	const bgCanvas = document.createElement('canvas');
+	const bgCtx = bgCanvas.getContext('2d', {alpha: false});
+
 	let animationFrameId;
 	let HexMap = new Map();
 
+	let ActiveHexagons = new Set();
 	let currentWidth = window.innerWidth;
 
 	const hexCorners = [];
@@ -52,17 +57,23 @@ export default function HexGrid()
 
 	const resizeAndBuild = (e) => {
 	  if (e && window.innerWidth === currentWidth) return;
+	  currentWidth = window.innerWidth;
 
 	  canvas.width = window.innerWidth;
 	  canvas.height = window.innerHeight;
 
+	  bgCanvas.width = canvas.width;
+	  bgCanvas.height = 
+
 	  HexMap.clear();
+	  ActiveHexagons.clear();
+
 	  const QMax = Math.ceil(canvas.width/(Config.HexRadius*1.5))+1;
+	  const RMax = Math.ceil(Config.VirtualHeight/(Config.HexRadius*Math.sqrt(3))) + 1;
+
 	  for (let q = -1; q <= QMax; q++)
 	  {
 		const ROffset = Math.floor(q/2);
-		const RMax = Math.ceil(Config.VirtualHeight/(Config.HexRadius*Math.sqrt(3))) + 1;
-
 		for (let r = -ROffset-1; r <= RMax - ROffset; r++)
 		{
 		  const {x,y} = axialToPixel(q,r,Config.HexRadius);
@@ -91,6 +102,7 @@ export default function HexGrid()
 	  if (TargetHex && TargetHex.state === State.Dormant)
 	  {
 		TargetHex.state = State.Filling;
+		ActiveHexagons.add(`${HexQ},${HexR}`);
 	  }
 	};
 
@@ -110,16 +122,42 @@ export default function HexGrid()
 	  ctx.save();
 	  ctx.translate(0, -currentScroll);
 
-	  ctx.lineWidth = 1;
-	  ctx.strokeStyle = Config.ColorStroke;
+	  const viewMinY = currentScroll-(Config.HexRadius*2);
+	  const viewMaxY = currentScroll+canvas.height+(Config.HexRadius*2);
+	  const QMax = Math.ceil(canvas.width / (Config.HexRadius * 1.5)) + 1;
+
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = Config.ColorStroke;
+      ctx.beginPath();
+
+	  for (let q = -1; q <= QMax; q++)
+	  {
+        const rMin = Math.floor((viewMinY / Config.HexRadius - (Math.sqrt(3)/2)*q) / Math.sqrt(3)) - 1;
+        const rMax = Math.ceil((viewMaxY / Config.HexRadius - (Math.sqrt(3)/2)*q) / Math.sqrt(3)) + 1;
+
+        for (let r = rMin; r <= rMax; r++)
+		{
+          const hex = HexMap.get(`${q},${r}`);
+          if (hex)
+		  {
+            ctx.moveTo(hex.x + hexCorners[0].x, hex.y + hexCorners[0].y);
+            for (let i = 1; i < 6; i++)
+			{
+              ctx.lineTo(hex.x + hexCorners[i].x, hex.y + hexCorners[i].y);
+            }
+            ctx.lineTo(hex.x + hexCorners[0].x, hex.y + hexCorners[0].y);
+          }
+        }
+      }
+
+	  ctx.stroke();
 
 	  const TriggerQueue = [];
 
-	  for (let [key, hex] of HexMap) {
-		if (hex.y < currentScroll - Config.HexRadius * 2 || hex.y > currentScroll + canvas.height + Config.HexRadius*2)
-		{
-		  continue;
-		}
+	  for (let key of ActiveHexagons)
+	  {
+		const hex = HexMap.get(key);
+		if (!hex) continue;
 
 		if (hex.state === State.Filling)
 		{
@@ -130,13 +168,15 @@ export default function HexGrid()
 			hex.state = State.Active;
 		  }
 		}
-		else if (hex.state === State.Drainign)
+		else if (hex.state === State.Draining)
 		{
 		  hex.energy -= Config.DrainSpeed;
 		  if (hex.energy <= 0.0)
 		  {
 			hex.energy = 0.0;
 			hex.state = State.Dormant;
+			ActiveHexagons.delete(key);
+			continue;
 		  }
 		}
 		else if (hex.state === State.Active)
@@ -146,38 +186,40 @@ export default function HexGrid()
 		  const WillDecay = Math.random() < Config.DecayRate;
 		  if (EdgeTile || WillDecay)
 		  {
-			hex.state = State.Drainign;
-			continue;
+			hex.state = State.Draining;
 		  }
-		  let ValidNeighbours = HexNeighbours.filter(n => n && n.state === State.Dormant);
-		  ValidNeighbours.sort(() => Math.random() - 0.5);
-		  const BranchingFactor = Math.ceil(Math.random() * (Config.MaxBranch))
-		  const Branches = ValidNeighbours.slice(0,BranchingFactor);
-		  for (let neighbour of Branches)
+		  else
 		  {
-			TriggerQueue.push(neighbour);
+			let ValidNeighbours = HexNeighbours.filter(n => n && n.state === State.Dormant);
+			ValidNeighbours.sort(() => Math.random() - 0.5);
+			const BranchingFactor = Math.ceil(Math.random() * (Config.MaxBranch))
+			const Branches = ValidNeighbours.slice(0,BranchingFactor);
+			for (let neighbour of Branches)
+			{
+				TriggerQueue.push(neighbour);
+			}
+			hex.state = State.Draining;
 		  }
-		  hex.state = State.Drainign;
 		}
 
-		ctx.save();
-		ctx.translate(hex.x, hex.y);
-		
-		ctx.beginPath();
-		ctx.moveTo(hexCorners[0].x, hexCorners[0].y);
-		for (let i = 1; i < 6; i++) {
-		  ctx.lineTo(hexCorners[i].x, hexCorners[i].y);
-		}
-		ctx.closePath();
-		ctx.stroke();
-
-		if (hex.energy > 0)
+		if (hex.energy > 0 && hex.y >= viewMinY && hex.y <= viewMaxY)
 		{
-		  ctx.fillStyle = `rgba(0,123,255,${hex.energy})`;
-		  ctx.fill();
+			ctx.save();
+			ctx.translate(hex.x, hex.y);
+			
+			ctx.beginPath();
+			ctx.moveTo(hexCorners[0].x, hexCorners[0].y);
+			for (let i = 1; i < 6; i++)
+			{
+			  ctx.lineTo(hexCorners[i].x, hexCorners[i].y);
+			}
+			ctx.closePath();
+			
+			ctx.fillStyle = `rgba(0,123,255,${hex.energy})`;
+			ctx.fill();
+			
+			ctx.restore();
 		}
-		
-		ctx.restore();
 	  }
 
 	  for (let target of TriggerQueue)
@@ -185,6 +227,7 @@ export default function HexGrid()
 		if (target.state === State.Dormant)
 		{
 			target.state = State.Filling;
+			ActiveHexagons.add(`${target.q},${target.r}`);
 		}
 	  }
 
@@ -193,7 +236,6 @@ export default function HexGrid()
 	};
 
 	resizeAndBuild();
-	window.addEventListener('resize', resizeAndBuild);
 	engineLoop();
 
 	return () => {

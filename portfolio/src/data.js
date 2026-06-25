@@ -13,7 +13,7 @@ export const State = {
   Dormant: 0,
   Filling: 1,
   Active: 2,
-  Drainign: 3
+  Draining: 3
 };
 
 export const DesktopIntroMain = "Hey, I'm Nishant.\nCurrently majoring in computer science."
