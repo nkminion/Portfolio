@@ -98,7 +98,7 @@ footer
   -webkit-font-smoothing: antialiased;
   transform: translateZ(0) translateY(0);
   will-change: transform, opacity;
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease 0.4s;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s ease 0.4s;
   top: 30vh;
   left: 0;
   pointer-events: auto;
@@ -113,7 +113,7 @@ footer
   -webkit-font-smoothing: antialiased;
   transform: translateZ(0) translateY(20px);
   will-change: transform, opacity;
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.0s ease;
+  transition: opacity 0.0s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s ease;
   top: 0;
   left: 0;
   display: block;
@@ -125,7 +125,7 @@ footer
 {
   transform: translateY(-20px);
   opacity: 0;
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.0s ease;
+  transition: opacity 0.0s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s ease;
   pointer-events: none;
 }
 
@@ -134,7 +134,7 @@ footer
   pointer-events: auto;
   transform: translateY(0);
   opacity: 1;
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease 0.4s;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s ease 0.4s;
 }
 
 .main
